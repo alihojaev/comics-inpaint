@@ -18,3 +18,4 @@ lama_large_512px.ckpt
 *.tar
 
 
+venv/

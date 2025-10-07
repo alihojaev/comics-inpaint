@@ -1,0 +1,59 @@
+# CPU version for local testing
+# Based on https://github.com/advimman/lama with anime/manga trained model
+
+FROM python:3.10-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    curl \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY docker/requirements_docker.txt /app/requirements.txt
+
+# Install Python dependencies for CPU
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir "numpy==1.26.4" "scipy==1.10.1" cython && \
+    python3 -m pip install --no-cache-dir torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cpu && \
+    python3 -m pip install --no-cache-dir albumentations==0.5.2 imgaug==0.4.0 && \
+    python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
+    python3 -m pip install --no-cache-dir --no-deps pytorch-lightning==1.2.9 kornia==0.5.0
+
+# Copy the entire project
+COPY . /app
+
+# Make sure lama_large_512px.ckpt is available
+# It will be copied from host or downloaded if needed
+RUN if [ ! -f /app/lama_large_512px.ckpt ]; then \
+        echo "Downloading lama_large_512px.ckpt from HuggingFace..." && \
+        curl -L "https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true" \
+        -o /app/lama_large_512px.ckpt; \
+    fi && \
+    mkdir -p /app/local-model/models && \
+    if [ ! -f /app/local-model/models/best_genpref.ckpt ]; then \
+        cp /app/lama_large_512px.ckpt /app/local-model/models/best_genpref.ckpt; \
+    fi
+
+# Create output directory
+RUN mkdir -p /app/outputs
+
+# Set environment for CPU
+ENV DEVICE=cpu
+
+# Default command - run simple test
+CMD ["python3", "/app/simple_test.py"]
+

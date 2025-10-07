@@ -1,0 +1,49 @@
+# RunPod Serverless CPU version for anime/manga inpainting
+# Based on LaMa: https://github.com/advimman/lama
+
+FROM python:3.10-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    curl \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY docker/requirements_docker.txt /app/requirements.txt
+
+# Install Python dependencies for CPU
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir "numpy==1.26.4" "scipy==1.10.1" cython && \
+    python3 -m pip install --no-cache-dir torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cpu && \
+    python3 -m pip install --no-cache-dir albumentations==0.5.2 imgaug==0.4.0 && \
+    python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
+    python3 -m pip install --no-cache-dir --no-deps pytorch-lightning==1.2.9 kornia==0.5.0
+
+# Copy the entire project
+COPY . /app
+
+# Download anime/manga model if not present
+ARG LAMA_URL="https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true"
+RUN mkdir -p /app/local-model/models && \
+    echo "Downloading anime/manga model from $LAMA_URL" && \
+    curl -L "$LAMA_URL" -o /app/local-model/models/best_genpref.ckpt
+
+# Set environment for CPU
+ENV DEVICE=cpu
+
+# Default command for RunPod
+ENTRYPOINT ["python3", "/app/rp_handler_cpu.py"]
