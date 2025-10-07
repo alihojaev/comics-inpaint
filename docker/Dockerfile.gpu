@@ -25,7 +25,8 @@ COPY docker/requirements_docker.txt /app/requirements.txt
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir "numpy==1.26.4" "scipy==1.10.1" cython && \
     python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
-    python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu124 torch==2.4.1+cu124 torchvision==0.19.1+cu124
+    python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu124 torch==2.4.1+cu124 torchvision==0.19.1+cu124 && \
+    python3 -m pip install --no-cache-dir --force-reinstall --no-binary=scikit-learn scikit-learn==1.1.3
 
 # Download LaMa checkpoint during build (can be overridden with --build-arg LAMA_URL=...)
 ARG LAMA_URL="https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true"
