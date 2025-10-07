@@ -112,6 +112,17 @@ def load_model():
 
     checkpoint_path = os.path.join(MODEL_DIR, "models", CHECKPOINT)
     _ensure_checkpoint_exists(checkpoint_path)
+    # If downloaded file is a raw gen_state_dict, wrap now
+    try:
+        state = torch.load(checkpoint_path, map_location="cpu")
+        if isinstance(state, dict) and "gen_state_dict" in state:
+            gen = state["gen_state_dict"]
+            if hasattr(gen, "state_dict"):
+                gen = gen.state_dict()
+            new_sd = {f"generator.{k}": v for k, v in gen.items()}
+            torch.save({"state_dict": new_sd}, checkpoint_path)
+    except Exception:
+        pass
     model = load_checkpoint(train_config, checkpoint_path, strict=False, map_location="cpu")
     model.freeze()
     model.to(torch.device(DEVICE))
