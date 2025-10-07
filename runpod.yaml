@@ -1,0 +1,15 @@
+name: comics-inpaint
+gpu: true
+accelerator: A10G
+image: <SET_AFTER_PUSH>
+startCommand: |
+  python3 /app/rp_handler.py
+env:
+  - key: MODEL_DIR
+    value: /app/local-model
+  - key: MODEL_CKPT
+    value: best_genpref.ckpt
+  - key: DEVICE
+    value: cuda
+
+
