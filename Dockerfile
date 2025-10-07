@@ -1,7 +1,7 @@
 # RunPod Serverless build expects Dockerfile in repo root.
 # This Dockerfile mirrors docker/Dockerfile.gpu.
 
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -27,7 +27,7 @@ COPY docker/requirements_docker.txt /app/requirements.txt
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir "numpy<1.22" "scipy<1.8" cython && \
     python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
-    python3 -m pip install --no-cache-dir torch==2.0.1+cu118 torchvision==0.15.2+cu118 --index-url https://download.pytorch.org/whl/cu118
+    python3 -m pip install --no-cache-dir torch==2.4.1+cu124 torchvision==0.19.1+cu124 --index-url https://download.pytorch.org/whl/cu124
 
 ARG LAMA_URL="https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true"
 RUN mkdir -p /app/local-model/models && \
