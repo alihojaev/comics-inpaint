@@ -139,20 +139,25 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         image = _read_image(inp["image"])  # RGB HxWx3 uint8
         mask = _read_mask(inp["mask"], target_wh=(image.shape[1], image.shape[0]))  # HxW uint8
 
-        # Auto-resize for memory efficiency (CPU optimization)
+        # Auto-resize for memory efficiency and ensure dimensions are multiples of 8
         max_size = int(os.environ.get("MAX_SIZE", "1024"))  # Max dimension
         orig_size = (image.shape[1], image.shape[0])
         
+        # Calculate new dimensions
         if max(orig_size) > max_size:
             ratio = max_size / max(orig_size)
             new_w = int(orig_size[0] * ratio)
             new_h = int(orig_size[1] * ratio)
-            
-            # Make sure dimensions are multiples of 8
-            new_w = (new_w // 8) * 8
-            new_h = (new_h // 8) * 8
-            
-            # Resize both image and mask
+        else:
+            new_w = orig_size[0]
+            new_h = orig_size[1]
+        
+        # Always ensure dimensions are multiples of 8 (required by model)
+        new_w = (new_w // 8) * 8
+        new_h = (new_h // 8) * 8
+        
+        # Resize if dimensions changed
+        if new_w != orig_size[0] or new_h != orig_size[1]:
             image_pil = Image.fromarray(image).resize((new_w, new_h), Image.LANCZOS)
             mask_pil = Image.fromarray(mask).resize((new_w, new_h), Image.NEAREST)
             image = np.array(image_pil)
