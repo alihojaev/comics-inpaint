@@ -20,3 +20,4 @@ wldhx.yadisk-direct
 
 
 runpod
+requests

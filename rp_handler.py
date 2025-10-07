@@ -20,6 +20,7 @@ from saicinpainting.training.trainers import load_checkpoint
 
 MODEL_DIR = os.environ.get("MODEL_DIR", "/app/local-model")
 CHECKPOINT = os.environ.get("MODEL_CKPT", "best_genpref.ckpt")
+MODEL_URL = os.environ.get("MODEL_URL", "")
 DEVICE = os.environ.get("DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -66,6 +67,41 @@ def _read_mask(data: str, target_wh=None) -> np.ndarray:
     return np.array(mask_img)
 
 
+def _ensure_checkpoint_exists(target_path: str):
+    if os.path.exists(target_path):
+        return
+    if not MODEL_URL:
+        raise FileNotFoundError(f"Checkpoint not found at {target_path} and MODEL_URL is not set")
+    # download and convert if needed
+    import requests
+    r = requests.get(MODEL_URL, timeout=300)
+    r.raise_for_status()
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    tmp_path = target_path + ".tmp"
+    with open(tmp_path, "wb") as f:
+        f.write(r.content)
+
+    # try wrap to generator.* if it's a raw LaMa gen_state_dict
+    try:
+        state = torch.load(tmp_path, map_location="cpu")
+        if isinstance(state, dict) and "gen_state_dict" in state:
+            gen = state["gen_state_dict"]
+            if hasattr(gen, "state_dict"):
+                gen = gen.state_dict()
+            new_sd = {f"generator.{k}": v for k, v in gen.items()}
+            torch.save({"state_dict": new_sd}, target_path)
+            os.remove(tmp_path)
+        elif isinstance(state, dict) and "state_dict" in state:
+            # already in expected format
+            os.rename(tmp_path, target_path)
+        else:
+            # fallback: keep as is
+            os.rename(tmp_path, target_path)
+    except Exception:
+        # if any error during wrap, keep original
+        os.rename(tmp_path, target_path)
+
+
 def load_model():
     train_config_path = os.path.join(MODEL_DIR, "config.yaml")
     with open(train_config_path, "r") as f:
@@ -75,6 +111,7 @@ def load_model():
     train_config.visualizer.kind = "noop"
 
     checkpoint_path = os.path.join(MODEL_DIR, "models", CHECKPOINT)
+    _ensure_checkpoint_exists(checkpoint_path)
     model = load_checkpoint(train_config, checkpoint_path, strict=False, map_location="cpu")
     model.freeze()
     model.to(torch.device(DEVICE))
