@@ -19,3 +19,4 @@ lama_large_512px.ckpt
 
 
 venv/
+test_docker_input.json

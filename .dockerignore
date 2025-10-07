@@ -6,5 +6,12 @@ outputs
 *.pth
 LaMa_inpainting.ipynb
 __pycache__
-
-
+venv
+test_input
+test_*.py
+test_*.json
+*.md
+build_and_test_cpu.sh
+run_local.sh
+simple_test.py
+test_custom.py

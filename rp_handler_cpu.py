@@ -143,6 +143,8 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         max_size = int(os.environ.get("MAX_SIZE", "1024"))  # Max dimension
         orig_size = (image.shape[1], image.shape[0])
         
+        print(f"[INFO] Input size: {orig_size}")
+        
         # Calculate new dimensions
         if max(orig_size) > max_size:
             ratio = max_size / max(orig_size)
@@ -156,12 +158,17 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         new_w = (new_w // 8) * 8
         new_h = (new_h // 8) * 8
         
+        print(f"[INFO] Adjusted size: ({new_w}, {new_h}) - multiples of 8")
+        
         # Resize if dimensions changed
         if new_w != orig_size[0] or new_h != orig_size[1]:
+            print(f"[INFO] Resizing from {orig_size} to ({new_w}, {new_h})")
             image_pil = Image.fromarray(image).resize((new_w, new_h), Image.LANCZOS)
             mask_pil = Image.fromarray(mask).resize((new_w, new_h), Image.NEAREST)
             image = np.array(image_pil)
             mask = np.array(mask_pil)
+        else:
+            print(f"[INFO] No resize needed")
 
         # build batch like in predict.py
         image_f = image.astype("float32") / 255.0
