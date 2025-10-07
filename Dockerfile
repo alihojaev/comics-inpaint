@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     build-essential \
+    curl \
     libgl1 \
     libglib2.0-0 \
     libsm6 \
@@ -27,6 +28,29 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir "numpy<1.22" "scipy<1.8" cython && \
     python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
     python3 -m pip install --no-cache-dir torch==2.0.1+cu118 torchvision==0.15.2+cu118 --index-url https://download.pytorch.org/whl/cu118
+
+ARG LAMA_URL="https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true"
+RUN mkdir -p /app/local-model/models && \
+    echo "Downloading checkpoint from $LAMA_URL" && \
+    curl -L "$LAMA_URL" -o /tmp/lama_large_512px.ckpt && \
+    python3 - <<'PY' \
+import torch, os
+src = "/tmp/lama_large_512px.ckpt"
+dst = "/app/local-model/models/best_genpref.ckpt"
+os.makedirs(os.path.dirname(dst), exist_ok=True)
+obj = torch.load(src, map_location="cpu")
+if isinstance(obj, dict) and "gen_state_dict" in obj:
+    gen = obj["gen_state_dict"]
+    if hasattr(gen, "state_dict"):
+        gen = gen.state_dict()
+    sd = {f"generator.{k}": v for k, v in gen.items()}
+    torch.save({"state_dict": sd}, dst)
+elif isinstance(obj, dict) and "state_dict" in obj:
+    torch.save(obj, dst)
+else:
+    torch.save({"state_dict": obj}, dst)
+print("saved", dst)
+PY
 
 COPY . /app
 
