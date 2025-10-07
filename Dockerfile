@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY docker/requirements_docker.txt /app/requirements.txt
 
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
-    python3 -m pip install --no-cache-dir "numpy<1.22" "scipy<1.8" cython && \
+    python3 -m pip install --no-cache-dir "numpy==1.26.4" "scipy==1.10.1" cython && \
     python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
     python3 -m pip install --no-cache-dir torch==2.4.1+cu124 torchvision==0.19.1+cu124 --index-url https://download.pytorch.org/whl/cu124
 
