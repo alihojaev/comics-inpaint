@@ -26,8 +26,9 @@ COPY docker/requirements_docker.txt /app/requirements.txt
 
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir "numpy==1.26.4" "scipy==1.10.1" cython && \
+    python3 -m pip install --no-cache-dir --pre --index-url https://download.pytorch.org/whl/nightly/cu124 torch torchvision && \
     python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
-    python3 -m pip install --no-cache-dir --pre --index-url https://download.pytorch.org/whl/nightly/cu124 torch torchvision
+    python3 -m pip install --no-cache-dir --no-deps pytorch-lightning==1.2.9 kornia==0.5.0
 
 ARG LAMA_URL="https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true"
 RUN mkdir -p /app/local-model/models && \
