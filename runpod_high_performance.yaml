@@ -1,0 +1,28 @@
+name: manga-inpaint-cpu-high-perf
+gpu: false
+accelerator: CPU
+image: <SET_AFTER_PUSH>
+startCommand: |
+  python3 /app/rp_handler_cpu.py
+
+# Высокопроизводительные настройки
+containerDiskSizeGb: 30
+idleTimeout: 300
+maxWorkers: 4
+timeoutSeconds: 600
+
+env:
+  - key: MODEL_DIR
+    value: /app/local-model
+  - key: MODEL_CKPT
+    value: best_genpref.ckpt
+  - key: DEVICE
+    value: cpu
+  - key: MAX_SIZE
+    value: "1536"
+  - key: MODEL_URL
+    value: "https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true"
+  - key: WORKERS
+    value: "4"
+  - key: BATCH_SIZE
+    value: "1"
