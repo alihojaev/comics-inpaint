@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Data/outputs
+outputs/
+*.ckpt
+*.pt
+*.pth
+bin/*.ckpt
+lama_large_512px.ckpt
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Docker
+*.tar
+
+

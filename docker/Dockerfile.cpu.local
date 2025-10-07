@@ -1,0 +1,31 @@
+FROM python:3.8-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY docker/requirements_docker.txt /app/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir "numpy<1.22" "scipy<1.8" cython && \
+    pip install --no-cache-dir -r /app/requirements.txt && \
+    pip install --no-cache-dir torch==1.8.1+cpu torchvision==0.9.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+ENV PYTHONPATH=/app \
+    TORCH_HOME=/app/.torch
+
+COPY . /app
+
+ENTRYPOINT ["python3", "bin/predict.py"]
+

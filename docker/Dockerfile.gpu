@@ -1,0 +1,34 @@
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    python3.10 \
+    python3-pip \
+    python3-venv \
+    build-essential \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY docker/requirements_docker.txt /app/requirements.txt
+
+# Preinstall numeric stack compatible with scikit-image pin
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir "numpy<1.22" "scipy<1.8" cython && \
+    python3 -m pip install --no-cache-dir -r /app/requirements.txt && \
+    python3 -m pip install --no-cache-dir torch==2.1.2+cu118 torchvision==0.16.2+cu118 --index-url https://download.pytorch.org/whl/cu118
+
+COPY . /app
+
+ENTRYPOINT ["python3", "/app/bin/predict.py"]
+
+
