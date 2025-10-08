@@ -4,7 +4,7 @@ set -euo pipefail
 export PYTHONUNBUFFERED=1
 
 # Optimize Python startup and CPU usage
-export PYTHONPATH="/app:$PYTHONPATH"
+export PYTHONPATH="/app:${PYTHONPATH:-}"
 export OMP_NUM_THREADS=4
 export MKL_NUM_THREADS=4
 
