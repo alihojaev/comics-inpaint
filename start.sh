@@ -8,8 +8,6 @@ if [[ "${RUNPOD_SERVERLESS:-}" != "" || "${RUNPOD_POD_ID:-}" != "" ]]; then
   echo "[start.sh] Starting Runpod Serverless handler"
   exec python3 /app/rp_handler_cpu.py
 else
-  echo "[start.sh] Local testing mode - handler will exit after loading"
-  echo "[start.sh] This is normal for local testing without RunPod environment"
-  python3 /app/rp_handler_cpu.py || true
-  echo "[start.sh] Handler test completed"
+  echo "[start.sh] Local mode: starting HTTP API on :8080"
+  exec python3 /app/local_api.py
 fi

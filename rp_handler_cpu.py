@@ -209,4 +209,7 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-runpod.serverless.start({"handler": handler})
+if os.environ.get("RUNPOD_SERVERLESS") or os.environ.get("RUNPOD_POD_ID"):
+    runpod.serverless.start({"handler": handler})
+else:
+    print("[rp_handler_cpu] Loaded handler in local mode; not starting RunPod worker")
