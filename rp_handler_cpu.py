@@ -129,7 +129,22 @@ def load_model():
     return model
 
 
+# Global model loading - optimized for fast startup
+print("[rp_handler_cpu] Loading model...")
 INPAINTER = load_model()
+print(f"[rp_handler_cpu] Model loaded on {DEVICE}")
+
+# Warm up model with dummy inference to cache computations
+print("[rp_handler_cpu] Warming up model...")
+try:
+    dummy_image = torch.randn(1, 3, 64, 64)
+    dummy_mask = torch.ones(1, 1, 64, 64)
+    with torch.no_grad():
+        _ = INPAINTER({"image": dummy_image, "mask": dummy_mask})
+    print("[rp_handler_cpu] Model warmed up and ready!")
+except Exception as e:
+    print(f"[rp_handler_cpu] Warning: Could not warm up model: {e}")
+    print("[rp_handler_cpu] Model loaded but not warmed up")
 
 
 def handler(event: Dict[str, Any]) -> Dict[str, Any]:

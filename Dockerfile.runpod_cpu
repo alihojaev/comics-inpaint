@@ -44,6 +44,12 @@ RUN mkdir -p /app/local-model/models && \
 
 # Set environment for CPU
 ENV DEVICE=cpu
+ENV MODEL_DIR=/app/local-model
+ENV MODEL_CKPT=best_genpref.ckpt
+ENV MAX_SIZE=1024
+
+# Pre-load model and cache everything during build
+RUN python3 /app/preload_model.py
 
 # Copy start script and make executable
 COPY start.sh /app/start.sh
