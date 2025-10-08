@@ -155,7 +155,7 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         mask = _read_mask(inp["mask"], target_wh=(image.shape[1], image.shape[0]))  # HxW uint8
 
         # Auto-resize for memory efficiency and ensure dimensions are multiples of 8
-        max_size = int(os.environ.get("MAX_SIZE", "1024"))  # Max dimension
+               max_size = int(os.environ.get("MAX_SIZE", "768"))  # Max dimension
         orig_size = (image.shape[1], image.shape[0])
         
         print(f"[INFO] Input size: {orig_size}")
