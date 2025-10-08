@@ -12,7 +12,7 @@ env:
   - key: DEVICE
     value: cpu
   - key: MAX_SIZE
-    value: "768"
+    value: "2048"
   - key: MODEL_URL
     value: "https://huggingface.co/dreMaz/AnimeMangaInpainting/resolve/main/lama_large_512px.ckpt?download=true"
   - key: OMP_NUM_THREADS
