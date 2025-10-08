@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
+from scipy import ndimage
 
 import runpod
 
@@ -65,6 +66,38 @@ def _read_mask(data: str, target_wh=None) -> np.ndarray:
         mask_img = mask_img.resize(target_wh, Image.NEAREST)
 
     return np.array(mask_img)
+
+
+def _process_mask(mask: np.ndarray, blur_edges: bool = True, blur_radius: int = 5, feather_amount: float = 0.1) -> np.ndarray:
+    """
+    Обрабатывает маску для более плавных переходов
+    
+    Args:
+        mask: Исходная маска (0-255)
+        blur_edges: Включить размытие краев
+        blur_radius: Радиус размытия (1-15)
+        feather_amount: Количество смягчения переходов (0.0-0.5)
+    
+    Returns:
+        Обработанная маска
+    """
+    processed_mask = mask.copy().astype(np.float32) / 255.0
+    
+    if blur_edges:
+        # Применяем Gaussian blur для размытия краев
+        processed_mask = ndimage.gaussian_filter(processed_mask, sigma=blur_radius/3.0)
+        
+        # Дополнительное смягчение переходов
+        if feather_amount > 0:
+            # Создаем градиент для плавных переходов
+            kernel_size = max(3, int(blur_radius * feather_amount))
+            kernel = np.ones((kernel_size, kernel_size), np.float32) / (kernel_size * kernel_size)
+            processed_mask = cv2.filter2D(processed_mask, -1, kernel)
+    
+    # Нормализуем обратно к 0-255
+    processed_mask = np.clip(processed_mask * 255.0, 0, 255).astype(np.uint8)
+    
+    return processed_mask
 
 
 def _ensure_checkpoint_exists(target_path: str):
@@ -138,6 +171,15 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
     try:
         image = _read_image(inp["image"])  # RGB HxWx3 uint8
         mask = _read_mask(inp["mask"], target_wh=(image.shape[1], image.shape[0]))  # HxW uint8
+        
+        # Processing parameters with defaults
+        blur_edges = inp.get("blur_edges", True)  # Размытие краев маски
+        blur_radius = inp.get("blur_radius", 5)   # Радиус размытия (1-15)
+        feather_amount = inp.get("feather_amount", 0.1)  # Смягчение переходов (0.0-0.5)
+        
+        # Обрабатываем маску для плавных переходов
+        if blur_edges:
+            mask = _process_mask(mask, blur_edges, blur_radius, feather_amount)
 
         # Auto-resize for memory efficiency and ensure dimensions are multiples of 8
         max_size = int(os.environ.get("MAX_SIZE", "1024"))  # Max dimension
@@ -202,7 +244,12 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
                 "input_size": orig_size,
                 "output_size": (res.shape[1], res.shape[0]),
                 "device": DEVICE,
-                "model": "lama_large_512px_anime_manga"
+                "model": "lama_large_512px_anime_manga",
+                "mask_processing": {
+                    "blur_edges": blur_edges,
+                    "blur_radius": blur_radius,
+                    "feather_amount": feather_amount
+                }
             }
         }
     except Exception as e:
